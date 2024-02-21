@@ -15,10 +15,9 @@ const clientOptions = { serverApi: { version: '1', strict: true, deprecationErro
 
 module.exports = class userDB {
   constructor() {
-    // We don't have a `Movie` object until initialize() is complete
+    // We don't have a `User` object until initialize() is complete
     this.User = null;
   }
-  // Pass the connection string to `initialize()`
   initialize(connectionString) {
     return new Promise((resolve, reject) => {
       const db = mongoose.createConnection(

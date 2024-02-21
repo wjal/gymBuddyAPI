@@ -4,9 +4,11 @@ const cors = require('cors');
 const dotenv = require('dotenv').config();
 const mongoose = require('mongoose');
 const usersDB = require("./modules/usersDB.js");
+const workoutDB = require('./modules/workoutDB.js')
 const req = require('express/lib/request');
 const { stringify } = require('querystring');
 
+const wDB = new workoutDB();
 const db = new usersDB();
 const app = express();
 const HTTP_PORT = process.env.PORT || 8080;
@@ -32,10 +34,6 @@ app.use(cors());
 
 //retrieve users (optional query), page, and perPage (both required) - working
 app.get("/api/users", (req, res)=>{
-    db.addNewUser({firstName: 'User',
-        lastName: 'McUserFace',
-        age: 100,
-        email: 'user@email.com',})
     db.getAllUsers(1, 25)
     .then(data=>{
       if(data == null){
@@ -49,6 +47,27 @@ app.get("/api/users", (req, res)=>{
         res
           .status(500)
           .send(`Unable To Find Users`);
+          console.log(err);
+        }
+      )
+  })
+
+  //retrieve workouts (optional query), page, and perPage (both required) - working
+  app.get("/api/workouts", (req, res)=>{
+    
+    wDB.getAllWorkouts(1, 25)
+    .then(data=>{
+      if(data == null){
+        res 
+          .status(204)
+          .send(`No Content Found`);
+      }else{
+      res
+        .json(data)}
+      }).catch(err=>{
+        res
+          .status(500)
+          .send(`Unable To Find Workouts`);
           console.log(err);
         }
       )
@@ -94,7 +113,29 @@ app.get("/api/users", (req, res)=>{
             console.log(err);
       })
   });
-  //update single user from movie database by id paramater - working
+
+  //add a workout object to User database - working
+
+  app.post("/api/workouts", (req, res)=>{
+    wDB.addNewWorkout(req.body)
+    .then(newWorkout=>{
+      if(newWorkout == null){
+        res
+          .status(204)
+          .send(`Unable To Add Workout`)
+      }
+      res
+        .status(201)
+        .json(newWorkout)
+      }).catch(err=>{
+          res
+            .status(500)
+            .send(`Unable To Add Workout`);
+            console.log(err);
+      })
+  });
+
+  //update single user from user database by id paramater - working
   app.put("/api/users/:id", (req, res)=>{
     db.updateUserById(req.body, req.params.id)
     .then(data=>{
@@ -113,7 +154,8 @@ app.get("/api/users", (req, res)=>{
           console.log(err)
     });
   })
-  //delete a single user from movie database by id parameter - working
+
+  //delete a single user from user database by id parameter - working
   app.delete("/api/users/:id", (req, res)=>{
     db.deleteUserById(req.params.id)
     .then(data=>{
@@ -139,11 +181,10 @@ app.get("/api/users", (req, res)=>{
   });
   
   
-  // Tell the app to start listening for requests
-  //connection to mongoDB Atlas is taking ~20seconds when connecting on my local machine, but is working faster on cyclic
-  
+ 
   db.initialize(process.env.MONGODB_CONN_STRING).then(()=>{
-      app.listen(HTTP_PORT, httpStart);
+    wDB.initialize(process.env.MONGODB_CONN_STRING_WORKOUTS).then(app.listen(HTTP_PORT, httpStart))
+      
   }).catch((err)=>{
       console.log(err);
   });
